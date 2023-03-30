@@ -7,6 +7,18 @@ on:
         description: "NodeJS version"
         type: number
         default: 18
+      pre-build:
+        description: "Command to run before building"
+        type: string
+        default: ""
+      post-build:
+        description: "Command to run after building"
+        type: string
+        default: ""
+      working-directory:
+        description: "Working directory"
+        type: string
+        default: "."
 
 # set permissions of GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -26,18 +38,24 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm
-          cache-dependency-path: package.json
+          cache-dependency-path: ${{ inputs.working-directory }}/package.json
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          cd ${{ inputs.working-directory }}
+          npm install
 
       - name: Build site
-        run: npm run build
+        run: |
+          cd ${{ inputs.working-directory }}
+          ${{ inputs.pre-build }}
+          npm run build
+          ${{ inputs.post-build }}
 
       - name: Upload build artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: build
+          path: ${{ inputs.working-directory }}/build
 
   deploy:
     environment:

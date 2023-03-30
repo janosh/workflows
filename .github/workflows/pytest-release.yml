@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Python version"
+        type: string
+        default: "3.9"
+      os:
+        description: "Operating system"
+        type: string
+        default: "ubuntu-latest"
+      install-cmd:
+        description: "Install dependencies"
+        required: false
+        type: string
+        default: pip install -e .[test]
+      test-cmd:
+        description: "Run tests"
+        required: false
+        type: string
+        default: pytest --durations 0 --cov .
+      twine-username:
+        description: "User or org name for PyPI"
+        type: string
+        default: janosh
+
+jobs:
+  tests:
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: ${{ inputs.install-cmd }}
+
+      - name: Run tests
+        id: tests
+        run: ${{ inputs.test-cmd }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: tests
+    if: github.event_name == 'release' && needs.tests.result == 'success'
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Build and upload dist
+        run: |
+          pip install build twine
+          python -m build
+          twine check dist/* --strict
+          twine upload --skip-existing --repository-url https://upload.pypi.org/legacy/ dist/*.tar.gz
+        env:
+          TWINE_USERNAME: ${{ inputs.twine-username }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

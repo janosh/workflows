@@ -2,7 +2,6 @@ name: Link Check
 
 on:
   workflow_call:
-    paths: ["**/*.md"]
 
 jobs:
   markdown-link-check:

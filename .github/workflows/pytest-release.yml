@@ -13,14 +13,20 @@ on:
         default: "ubuntu-latest"
       install-cmd:
         description: "Install dependencies"
-        required: false
         type: string
         default: pip install -e .[test]
       test-cmd:
         description: "Run tests"
-        required: false
         type: string
         default: pytest --durations 0 --cov .
+      pre-test:
+        description: "Run before tests"
+        type: string
+        default: ""
+      pre-release:
+        description: "Run before release"
+        type: string
+        default: ""
       twine-username:
         description: "User or org name for PyPI"
         type: string
@@ -46,7 +52,9 @@ jobs:
 
       - name: Run tests
         id: tests
-        run: ${{ inputs.test-cmd }}
+        run: |
+          ${{ inputs.pre-test }}
+          ${{ inputs.test-cmd }}
 
   release:
     runs-on: ubuntu-latest
@@ -61,6 +69,7 @@ jobs:
           pip install build twine
           python -m build
           twine check dist/* --strict
+          ${{ inputs.pre-release }}
           twine upload --skip-existing --repository-url https://upload.pypi.org/legacy/ dist/*.tar.gz
         env:
           TWINE_USERNAME: ${{ inputs.twine-username }}

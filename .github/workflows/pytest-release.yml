@@ -4,31 +4,31 @@ on:
   workflow_call:
     inputs:
       python-version:
-        description: "Python version"
+        description: Python version
         type: string
         default: "3.9"
       os:
-        description: "Operating system"
+        description: Operating system
         type: string
-        default: "ubuntu-latest"
+        default: ubuntu-latest
       install-cmd:
-        description: "Install dependencies"
+        description: Install dependencies
         type: string
         default: pip install -e .[test]
       test-cmd:
-        description: "Run tests"
+        description: Run tests
         type: string
         default: pytest --durations 0 --cov .
       pre-test:
-        description: "Run before tests"
+        description: Run before tests
         type: string
         default: ""
       pre-release:
-        description: "Run before release"
+        description: Run before release
         type: string
         default: ""
       twine-username:
-        description: "User or org name for PyPI"
+        description: User or org name for PyPI
         type: string
         default: janosh
 

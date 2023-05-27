@@ -4,12 +4,31 @@ on:
   workflow_call:
     inputs:
       node-version:
-        description: "NodeJS version"
+        description: NodeJS version
         type: number
         default: 18
+      install-cmd:
+        description: Install dependencies
+        type: string
+        default: npm install
+      install-e2e:
+        description: Install browser for end-to-end tests
+        type: string
+        default: npx playwright install chromium
+      test-cmd:
+        description: Shell command to run tests
+        type: string
+        default: npm run test
+      working-directory:
+        description: Working directory
+        type: string
+        default: "."
 
 jobs:
   tests:
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     runs-on: ubuntu-latest
 
     steps:
@@ -20,15 +39,16 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.working-directory }}/package.json
 
       - name: Install dependencies
         run: |
-          npm install
-          npx playwright install chromium
+          ${{ inputs.install-cmd }}
+          ${{ inputs.install-e2e }}
 
       - name: Run tests
         id: tests
-        run: npm run test
+        run: ${{ inputs.test-cmd }}
 
   release:
     runs-on: ubuntu-latest
@@ -40,7 +60,7 @@ jobs:
 
       - name: Build package and publish to NPM
         run: |
-          npm install
+          ${{ inputs.install-cmd }}
           npm run package
           npm login --auth-type=legacy
           npm publish

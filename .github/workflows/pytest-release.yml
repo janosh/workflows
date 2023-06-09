@@ -60,17 +60,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: tests
     if: github.event_name == 'release' && needs.tests.result == 'success'
+    permissions:
+      # For pypi trusted publishing
+      id-token: write
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
 
       - name: Build and upload dist
         run: |
-          pip install build twine
+          pip install build
           python -m build
-          twine check dist/* --strict
-          ${{ inputs.pre-release }}
-          twine upload --skip-existing --repository-url https://upload.pypi.org/legacy/ dist/*.tar.gz
-        env:
-          TWINE_USERNAME: ${{ inputs.twine-username }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Publish to PyPi
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+          verbose: true

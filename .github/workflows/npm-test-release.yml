@@ -53,16 +53,23 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: tests
-    if: github.event_name == 'release' && needs.tests.result == 'success'
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.task == 'release')
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
+
+      - name: Set up node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.working-directory }}/package.json
+          # https://docs.github.com/actions/publishing-packages/publishing-nodejs-packages
+          registry-url: https://registry.npmjs.org
 
       - name: Build package and publish to NPM
         run: |
           ${{ inputs.install-cmd }}
           npm run package
-          npm login --auth-type=legacy
           npm publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -61,7 +61,7 @@ jobs:
     needs: tests
     if: github.event_name == 'release' && needs.tests.result == 'success'
     permissions:
-      # For pypi trusted publishing
+      # For PyPI trusted publishing
       id-token: write
     steps:
       - name: Check out repo

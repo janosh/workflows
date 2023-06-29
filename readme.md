@@ -14,3 +14,7 @@ None yet.
 ## Docs
 
 [GitHub Actions: Reusable Workflows](https://docs.github.com/actions/learn-github-actions/reusing-workflows)
+
+## Useful Links
+
+- [How to not run certain jobs on forked repos](https://stackoverflow.com/a/70776678)

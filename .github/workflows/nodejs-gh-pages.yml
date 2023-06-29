@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   build:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: ${{ !github.event.pull_request.head.repo.fork }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}

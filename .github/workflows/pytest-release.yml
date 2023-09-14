@@ -70,7 +70,7 @@ jobs:
           python -m build
           twine check dist/* --strict
           ${{ inputs.pre-release }}
-          twine upload --skip-existing --repository-url https://upload.pypi.org/legacy/ dist/*.tar.gz
+          twine upload --verbose --skip-existing dist/*
         env:
           TWINE_USERNAME: ${{ inputs.twine-username }}
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

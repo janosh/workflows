@@ -11,6 +11,10 @@ on:
         description: Operating system
         type: string
         default: ubuntu-latest
+      pre-install-cmd:
+        description: Run before install
+        type: string
+        default: ""
       install-cmd:
         description: Install dependencies
         type: string
@@ -48,7 +52,10 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: ${{ inputs.install-cmd }}
+        shell: bash
+        run: |
+          ${{ inputs.pre-install-cmd }}
+          ${{ inputs.install-cmd }}
 
       - name: Run tests
         id: tests

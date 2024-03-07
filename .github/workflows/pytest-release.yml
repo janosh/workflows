@@ -14,7 +14,7 @@ on:
       pre-install-cmd:
         description: Run before install
         type: string
-        default: ""
+        default: "pip install uv"
       install-cmd:
         description: Install dependencies
         type: string

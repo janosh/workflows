@@ -22,7 +22,7 @@ on:
       install-cmd-uv:
         description: Install dependencies with uv
         type: string
-        default: "uv install -e '.[test]'  --system"
+        default: "uv pip install -e '.[test]'  --system"
       test-cmd:
         description: Run tests
         type: string

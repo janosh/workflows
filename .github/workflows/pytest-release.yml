@@ -18,7 +18,7 @@ on:
       install-cmd:
         description: Install dependencies
         type: string
-        default: pip install -e .[test]
+        default: uv pip install -e '.[test]'  --system
       test-cmd:
         description: Run tests
         type: string

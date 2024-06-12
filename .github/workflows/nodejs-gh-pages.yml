@@ -6,7 +6,7 @@ on:
       node-version:
         description: NodeJS version
         type: number
-        default: 18
+        default: 22
       pre-build:
         description: Command to run before building
         type: string

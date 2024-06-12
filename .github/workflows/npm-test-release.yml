@@ -6,7 +6,7 @@ on:
       node-version:
         description: NodeJS version
         type: number
-        default: 18
+        default: 22
       install-cmd:
         description: Install dependencies
         type: string
@@ -23,13 +23,17 @@ on:
         description: Working directory
         type: string
         default: "."
+      runs-on:
+        description: Runner
+        type: string
+        default: ubuntu-latest
 
 jobs:
   tests:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
 
     steps:
       - name: Check out repo
@@ -49,13 +53,6 @@ jobs:
       - name: Run tests
         id: tests
         run: ${{ inputs.test-cmd }}
-
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: ${{ inputs.working-directory }}/playwright-report
-          path: ${{ inputs.working-directory }}/test-results/
-          retention-days: 5
 
   release:
     runs-on: ubuntu-latest

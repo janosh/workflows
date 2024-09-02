@@ -22,7 +22,7 @@ on:
       test-cmd:
         description: Run tests
         type: string
-        default: pytest --durations 0 --cov .
+        default: pytest --durations 20 --cov .
       pre-test:
         description: Run before tests
         type: string

@@ -14,7 +14,7 @@ on:
       pre-install-cmd:
         description: Run before install
         type: string
-        default: "pip install uv"
+        default: ""
       install-cmd:
         description: Install dependencies
         type: string
@@ -44,12 +44,15 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v4
 
-      - name: Set up python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
 
       - name: Install dependencies
         shell: bash

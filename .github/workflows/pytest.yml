@@ -6,7 +6,7 @@ on:
       python-version:
         description: Python version
         type: string
-        default: "3.9"
+        default: "3.10"
       os:
         description: Operating system
         type: string
@@ -27,14 +27,6 @@ on:
         description: Run before tests
         type: string
         default: ""
-      pre-release:
-        description: Run before release
-        type: string
-        default: ""
-      twine-username:
-        description: User or org name for PyPI
-        type: string
-        default: __token__
 
 jobs:
   tests:
@@ -65,23 +57,3 @@ jobs:
         run: |
           ${{ inputs.pre-test }}
           ${{ inputs.test-cmd }}
-
-  release:
-    runs-on: ubuntu-latest
-    needs: tests
-    if: github.event_name == 'release' && needs.tests.result == 'success'
-    permissions:
-      id-token: write
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v4
-
-      - name: Build and upload dist
-        run: |
-          pip install build twine
-          python -m build
-          twine check dist/* --strict
-          ${{ inputs.pre-release }}
-
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1

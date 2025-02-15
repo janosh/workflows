@@ -1,4 +1,4 @@
-name: NPM Tests
+name: NodeJS Tests
 
 on:
   workflow_call:
@@ -12,9 +12,11 @@ on:
         type: string
         default: npm install
       install-e2e:
-        description: Install browser for end-to-end tests
+        description: |
+          Browser installation command for end-to-end tests. Usually `npx playwright install chromium`.
+          Defaults to empty string to avoid long install time if not needed.
         type: string
-        default: npx playwright install chromium
+        default: ""
       test-cmd:
         description: Shell command to run tests
         type: string

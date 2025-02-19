@@ -27,6 +27,10 @@ on:
         description: Run before tests
         type: string
         default: ""
+      upload-coverage:
+        description: One of 'yes', 'no' or 'strict' (fail on error)
+        type: string
+        default: "no"
 
 jobs:
   tests:
@@ -57,3 +61,11 @@ jobs:
         run: |
           ${{ inputs.pre-test }}
           ${{ inputs.test-cmd }}
+
+      - name: Upload coverage to Codecov
+        if: inputs.upload-coverage != 'no'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: ${{ inputs.upload-coverage == 'strict' }}

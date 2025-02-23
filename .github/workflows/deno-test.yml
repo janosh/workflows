@@ -1,0 +1,66 @@
+name: Deno Tests
+
+on:
+  workflow_call:
+    inputs:
+      test-cmd:
+        description: Shell command to run tests
+        type: string
+        default: deno task test
+      working-directory:
+        description: Working directory
+        type: string
+        default: "."
+      runs-on:
+        description: Runner
+        type: string
+        default: ubuntu-latest
+      install-cmd:
+        description: Command to install dependencies
+        type: string
+        default: deno install
+      lint-cmd:
+        description: Command to run lint
+        type: string
+        default: deno lint
+      format-cmd:
+        description: Command to run format
+        type: string
+        default: deno fmt --check
+
+jobs:
+  tests:
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    runs-on: ${{ inputs.runs-on }}
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+
+      - name: Install dependencies
+        run: ${{ inputs.install-cmd }}
+
+      - name: Run tests
+        id: tests
+        run: ${{ inputs.test-cmd }}
+
+  lint:
+    if: ${{ inputs.lint-cmd != '' }} || ${{ inputs.format-cmd != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+
+      - name: Run deno fmt
+        run: ${{ inputs.format-cmd }}
+
+      - name: Run deno lint
+        run: ${{ inputs.lint-cmd }}

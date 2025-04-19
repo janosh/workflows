@@ -18,9 +18,13 @@ on:
         type: string
         default: ""
       test-cmd:
-        description: Shell command to run tests
+        description: Shell command to run unit tests
         type: string
         default: npm run test
+      e2e-test-cmd:
+        description: Shell command to run E2E/integration tests. Leave empty to skip E2E tests. Usually something like `playwright test tests/*.ts`
+        type: string
+        default: ""
       working-directory:
         description: Working directory
         type: string
@@ -31,7 +35,7 @@ on:
         default: ubuntu-latest
 
 jobs:
-  tests:
+  unit-tests:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -48,10 +52,34 @@ jobs:
           cache-dependency-path: ${{ inputs.working-directory }}/package.json
 
       - name: Install dependencies
+        run: ${{ inputs.install-cmd }}
+
+      - name: Run unit tests
+        id: unit-tests
+        run: ${{ inputs.test-cmd }}
+
+  end-to-end-tests:
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    runs-on: ${{ inputs.runs-on }}
+    if: inputs.e2e-test-cmd != ''
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.working-directory }}/package.json
+
+      - name: Install dependencies
         run: |
           ${{ inputs.install-cmd }}
           ${{ inputs.install-e2e }}
 
-      - name: Run tests
-        id: tests
-        run: ${{ inputs.test-cmd }}
+      - name: Run end-to-end tests
+        id: e2e-tests
+        run: ${{ inputs.e2e-test-cmd }}

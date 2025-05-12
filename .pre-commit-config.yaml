@@ -1,5 +1,6 @@
 ci:
   autoupdate_schedule: quarterly
+  skip: [lychee]
 
 default_stages: [pre-commit]
 
@@ -24,6 +25,13 @@ repos:
         stages: [pre-commit, commit-msg]
         args: [--check-filenames]
 
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.32.0
+    hooks:
+      - id: typos
+        types: [text]
+        args: []
+
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.44.0
     hooks:
@@ -32,3 +40,9 @@ repos:
         # MD033: no inline HTML
         # MD041: first line in a file should be a top-level heading
         args: [--disable, MD013, MD033, MD041, "--"]
+
+  - repo: https://github.com/lycheeverse/lychee
+    rev: v0.15.1
+    hooks:
+      - id: lychee
+        args: [--accept, "100..=103,200..=299,401,403,429,500"]

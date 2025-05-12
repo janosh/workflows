@@ -46,9 +46,7 @@ jobs:
           python-version: ${{ inputs.python-version }}
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v2
-        with:
-          enable-cache: true
+        uses: astral-sh/setup-uv@v6
 
       - name: Install dependencies
         shell: bash

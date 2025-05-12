@@ -35,11 +35,12 @@ on:
         default: ubuntu-latest
 
 jobs:
-  unit-tests:
+  unit:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     runs-on: ${{ inputs.runs-on }}
+    if: inputs.test-cmd != ''
 
     steps:
       - name: Check out repo
@@ -58,7 +59,7 @@ jobs:
         id: unit-tests
         run: ${{ inputs.test-cmd }}
 
-  end-to-end-tests:
+  end-to-end:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}

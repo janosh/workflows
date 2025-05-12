@@ -35,7 +35,7 @@ on:
         default: ubuntu-latest
 
 jobs:
-  unit-tests:
+  unit:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -58,7 +58,7 @@ jobs:
         id: unit-tests
         run: ${{ inputs.test-cmd }}
 
-  end-to-end-tests:
+  end-to-end:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}

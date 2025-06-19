@@ -39,6 +39,10 @@ on:
         description: Command to install end-to-end dependencies
         type: string
         default: ""
+      e2e-continue-on-error:
+        description: Allow E2E tests to fail without failing the CI
+        type: boolean
+        default: false
 
 jobs:
   unit:
@@ -88,6 +92,7 @@ jobs:
       - name: Run end-to-end tests
         id: e2e-tests
         run: ${{ inputs.e2e-test-cmd }}
+        continue-on-error: ${{ inputs.e2e-continue-on-error }}
 
   lint:
     if: ${{ inputs.lint-cmd != '' }} || ${{ inputs.format-cmd != '' }}
@@ -101,6 +106,8 @@ jobs:
 
       - name: Set up Deno
         uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ inputs.deno-version }}
 
       - name: Run deno fmt
         run: ${{ inputs.format-cmd }}

@@ -7,6 +7,10 @@ on:
         description: Deno version
         type: string
         default: v2.x
+      uv-version:
+        description: uv version
+        type: string
+        default: ""
       install-cmd:
         description: Command to install dependencies
         type: string
@@ -56,6 +60,12 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: ${{ inputs.deno-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        if: inputs.uv-version != ''
+        with:
+          version: ${{ inputs.uv-version }}
 
       - name: Install dependencies
         run: ${{ inputs.install-cmd }}

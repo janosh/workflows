@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-await-in-loop
 // Generate same release notes as GitHub and prepend to changelog.md
 // Automatically detects previous tag and formats the changelog with deno fmt
 // Usage: deno run -A make-release-notes.ts [tag_name] [changelog_file]
@@ -21,7 +22,6 @@ async function find_config_file(
   while (current_dir !== `/` && current_dir !== `.`) {
     const file_path = `${current_dir}/${filename}`
     try {
-      // deno-lint-ignore no-await-in-loop
       await Deno.stat(file_path)
       return file_path
     } catch {
@@ -33,11 +33,9 @@ async function find_config_file(
   return null
 }
 
-async function get_pkg_info(): Promise<{ name: string; version: string } | null> {
+async function get_pkg_info(): Promise<{ name: string; version: string }> {
   const search_dirs = [Deno.cwd()]
-  try {
-    search_dirs.unshift(await exec_cmd([`git`, `rev-parse`, `--show-toplevel`]))
-  } catch {}
+  search_dirs.unshift(await exec_cmd([`git`, `rev-parse`, `--show-toplevel`]))
 
   for (const search_dir of search_dirs) {
     for (
@@ -58,24 +56,15 @@ async function get_pkg_info(): Promise<{ name: string; version: string } | null>
     ) {
       const file_path = await find_config_file(filename, search_dir)
       if (file_path) {
-        try {
-          const result = parser(await Deno.readTextFile(file_path))
-          if (result) return result
-        } catch (error) {
-          console.warn(
-            `⚠️  Error reading ${filename}: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
-          )
-        }
+        const result = parser(await Deno.readTextFile(file_path))
+        if (result) return result
       }
     }
   }
 
-  console.warn(
-    `⚠️  No package.json or pyproject.toml found in git root or current directory`,
+  throw new Error(
+    `No package.json or pyproject.toml with version found in git root or current directory`,
   )
-  return null
 }
 
 async function get_repo_info() {
@@ -83,15 +72,11 @@ async function get_repo_info() {
 }
 
 async function find_previous_tag(current_tag: string): Promise<string | undefined> {
-  try {
-    const tags = (await exec_cmd([`git`, `tag`, `--sort=-version:refname`])).split(`\n`)
-      .filter(Boolean)
-    if (!tags.length) return undefined
-    const idx = tags.indexOf(current_tag)
-    return idx !== -1 && idx < tags.length - 1 ? tags[idx + 1] : tags[0]
-  } catch {
-    return undefined
-  }
+  const tags = (await exec_cmd([`git`, `tag`, `--sort=-version:refname`])).split(`\n`)
+    .filter(Boolean)
+  if (!tags.length) return undefined
+  const idx = tags.indexOf(current_tag)
+  return idx !== -1 && idx < tags.length - 1 ? tags[idx + 1] : tags[0]
 }
 
 async function generate_release_notes(
@@ -125,17 +110,8 @@ async function prepend_to_changelog(
   previous_tag: string | undefined,
   changelog_file: string,
 ): Promise<void> {
-  let lines: string[]
-  let header_idx: number
-
-  try {
-    lines = (await Deno.readTextFile(changelog_file)).split(`\n`)
-    header_idx = lines.findIndex((line) => line.trim() === `# Changelog`)
-  } catch {
-    // File doesn't exist, create it with a header
-    lines = [`# Changelog`]
-    header_idx = 0
-  }
+  const lines = (await Deno.readTextFile(changelog_file)).split(`\n`)
+  const header_idx = lines.findIndex((line) => line.trim() === `# Changelog`)
 
   if (header_idx === -1) {
     throw new Error(`Could not find "# Changelog" header in ${changelog_file}`)
@@ -147,7 +123,7 @@ async function prepend_to_changelog(
     year: `numeric`,
   })
   const [repo_info, pkg_info] = await Promise.all([get_repo_info(), get_pkg_info()])
-  const project_name = pkg_info?.name || repo_info.name
+  const project_name = pkg_info.name || repo_info.name
   const base_url = `https://github.com/${repo_info.owner.login}/${project_name}`
   const compare_url = previous_tag
     ? `${base_url}/compare/${previous_tag}...${tag_name}`
@@ -176,21 +152,8 @@ async function main(): Promise<void> {
   let tag_name = provided_tag
   if (!tag_name) {
     const pkg = await get_pkg_info()
-    if (pkg?.version) {
-      tag_name = pkg.version.startsWith(`v`) ? pkg.version : `v${pkg.version}`
-      console.log(`📦 Using version from project config: ${tag_name}`)
-    } else {
-      console.error(
-        `❌ Error: No tag name specified and no version found in package.json or pyproject.toml!
-
-Usage: deno run -A make-release-notes.ts [tag_name] [changelog_file]
-Examples:
-  deno run -A make-release-notes.ts v1.0.0           # Specify tag explicitly
-  deno run -A make-release-notes.ts                  # Use version from package.json or pyproject.toml
-  deno run -A make-release-notes.ts v1.1.0 HISTORY.md # Custom changelog file`,
-      )
-      Deno.exit(1)
-    }
+    tag_name = pkg.version.startsWith(`v`) ? pkg.version : `v${pkg.version}`
+    console.log(`📦 Using version from project config: ${tag_name}`)
   }
 
   const previous_tag = await find_previous_tag(tag_name)

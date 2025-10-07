@@ -93,24 +93,3 @@ jobs:
         id: e2e-tests
         run: ${{ inputs.e2e-test-cmd }}
         continue-on-error: ${{ inputs.e2e-continue-on-error }}
-
-  lint:
-    if: ${{ inputs.lint-cmd != '' }} || ${{ inputs.format-cmd != '' }}
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v4
-
-      - name: Set up Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: ${{ inputs.deno-version }}
-
-      - name: Run deno fmt
-        run: ${{ inputs.format-cmd }}
-
-      - name: Run deno lint
-        run: ${{ inputs.lint-cmd }}

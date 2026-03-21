@@ -5,8 +5,8 @@ on:
     inputs:
       node-version:
         description: NodeJS version
-        type: number
-        default: 22.4 # TODO loosen pin once https://github.com/npm/cli/issues/7657 resolves
+        type: string
+        default: "24"
       pre-build:
         description: Command to run before building
         type: string
@@ -47,16 +47,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ inputs.node-version }}
           cache-dependency-path: ${{ inputs.working-directory }}/package.json
 
       - name: Set up python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         if: inputs.python-version != null
         with:
           python-version: ${{ inputs.python-version }}
@@ -75,7 +75,7 @@ jobs:
           ${{ inputs.post-build }}
 
       - name: Upload build artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ${{ inputs.working-directory }}/build
 

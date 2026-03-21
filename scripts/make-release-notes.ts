@@ -1,41 +1,72 @@
-// deno-lint-ignore-file no-await-in-loop
 // Generate same release notes as GitHub and prepend to changelog.md
-// Automatically detects previous tag and formats the changelog with deno fmt
-// Usage: deno run -A make-release-notes.ts [tag_name] [changelog_file]
-// E.g. deno run -A make-release-notes.ts v0.1.0 changelog.md
+// Automatically detects previous tag
+// Usage: node scripts/make-release-notes.ts [tag_name] [changelog_file]
+// E.g. node scripts/make-release-notes.ts v0.1.0 changelog.md
 
-import * as toml from 'jsr:@std/toml@^0.218.0'
+import { execFile } from 'node:child_process'
+import { access, readFile, writeFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
+import { promisify } from 'node:util'
+
+const exec_file = promisify(execFile)
 
 async function exec_cmd(cmd: string[]): Promise<string> {
-  const { stdout } = await new Deno.Command(cmd[0], {
-    args: cmd.slice(1),
-    stdout: `piped`,
-  }).output()
-  return new TextDecoder().decode(stdout).trim()
+  const { stdout } = await exec_file(cmd[0], cmd.slice(1))
+  return stdout.trim()
 }
 
 async function find_config_file(
   filename: string,
-  start_dir: string = Deno.cwd(),
+  start_dir: string = process.cwd(),
 ): Promise<string | null> {
   let current_dir = start_dir
   while (current_dir !== `/` && current_dir !== `.`) {
     const file_path = `${current_dir}/${filename}`
     try {
-      await Deno.stat(file_path)
+      await access(file_path)
       return file_path
     } catch {
-      const parent_dir = current_dir.split(`/`).slice(0, -1).join(`/`)
+      const parent_dir = dirname(current_dir)
       if (parent_dir === current_dir) break
-      current_dir = parent_dir || `/`
+      current_dir = parent_dir
     }
   }
   return null
 }
 
+function parse_pyproject(
+  content: string,
+): { name: string; version: string } | null {
+  const lines = content.split(`\n`)
+  let in_project = false
+  let name: string | undefined
+  let version: string | undefined
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (trimmed.startsWith(`[`)) {
+      in_project = trimmed === `[project]`
+      continue
+    }
+    if (!in_project || trimmed.startsWith(`#`) || !trimmed) continue
+
+    const match = trimmed.match(/^(\w+)\s*=\s*"([^"]*)"/)
+    if (match) {
+      if (match[1] === `name`) name = match[2]
+      if (match[1] === `version`) version = match[2]
+    }
+  }
+
+  return version ? { name: name || `unknown`, version } : null
+}
+
 async function get_pkg_info(): Promise<{ name: string; version: string }> {
-  const search_dirs = [Deno.cwd()]
-  search_dirs.unshift(await exec_cmd([`git`, `rev-parse`, `--show-toplevel`]))
+  const search_dirs = [process.cwd()]
+  try {
+    search_dirs.unshift(await exec_cmd([`git`, `rev-parse`, `--show-toplevel`]))
+  } catch {
+    // not in a git repo, just search cwd
+  }
 
   for (const search_dir of search_dirs) {
     for (
@@ -44,20 +75,17 @@ async function get_pkg_info(): Promise<{ name: string; version: string }> {
           const { name, version } = JSON.parse(content)
           return version ? { name: name || `unknown`, version } : null
         }],
-        [`pyproject.toml`, (content: string) => {
-          const data = toml.parse(content) as {
-            project?: { name?: string; version?: string }
-          }
-          return data.project?.version
-            ? { name: data.project.name || `unknown`, version: data.project.version }
-            : null
-        }],
+        [`pyproject.toml`, parse_pyproject],
       ] as const
     ) {
       const file_path = await find_config_file(filename, search_dir)
       if (file_path) {
-        const result = parser(await Deno.readTextFile(file_path))
-        if (result) return result
+        try {
+          const result = parser(await readFile(file_path, `utf-8`))
+          if (result) return result as { name: string; version: string }
+        } catch {
+          // malformed file, try next
+        }
       }
     }
   }
@@ -67,13 +95,18 @@ async function get_pkg_info(): Promise<{ name: string; version: string }> {
   )
 }
 
-async function get_repo_info() {
+async function get_repo_info(): Promise<{ owner: { login: string }; name: string }> {
   return JSON.parse(await exec_cmd([`gh`, `repo`, `view`, `--json`, `owner,name`]))
 }
 
 async function find_previous_tag(current_tag: string): Promise<string | undefined> {
-  const tags = (await exec_cmd([`git`, `tag`, `--sort=-version:refname`])).split(`\n`)
-    .filter(Boolean)
+  let tag_output: string
+  try {
+    tag_output = await exec_cmd([`git`, `tag`, `--sort=-version:refname`])
+  } catch {
+    return undefined
+  }
+  const tags = tag_output.split(`\n`).filter(Boolean)
   if (!tags.length) return undefined
   const idx = tags.indexOf(current_tag)
   return idx !== -1 && idx < tags.length - 1 ? tags[idx + 1] : tags[0]
@@ -87,21 +120,11 @@ async function generate_release_notes(
   const request_body: { tag_name: string; previous_tag_name?: string } = { tag_name }
   if (previous_tag?.trim()) request_body.previous_tag_name = previous_tag
 
-  const process = new Deno.Command(`gh`, {
-    args: [`api`, `repos/${owner.login}/${name}/releases/generate-notes`, `--input`, `-`],
-    stdin: `piped`,
-    stdout: `piped`,
-  })
+  const { stdout } = await exec_file(`gh`, [
+    `api`, `repos/${owner.login}/${name}/releases/generate-notes`, `--input`, `-`,
+  ], { input: JSON.stringify(request_body) })
 
-  const child = process.spawn()
-  const writer = child.stdin.getWriter()
-  await writer.write(new TextEncoder().encode(JSON.stringify(request_body)))
-  await writer.close()
-
-  const { code, stdout } = await child.output()
-  if (code !== 0) throw new Error(`GitHub API call failed`)
-
-  return JSON.parse(new TextDecoder().decode(stdout)).body
+  return JSON.parse(stdout).body
 }
 
 async function prepend_to_changelog(
@@ -110,7 +133,7 @@ async function prepend_to_changelog(
   previous_tag: string | undefined,
   changelog_file: string,
 ): Promise<void> {
-  const lines = (await Deno.readTextFile(changelog_file)).split(`\n`)
+  const lines = (await readFile(changelog_file, `utf-8`)).split(`\n`)
   const header_idx = lines.findIndex((line) => line.trim() === `# Changelog`)
 
   if (header_idx === -1) {
@@ -142,12 +165,11 @@ async function prepend_to_changelog(
       ``,
     ].join(`\n`),
   )
-  await Deno.writeTextFile(changelog_file, lines.join(`\n`))
-  await exec_cmd([`deno`, `fmt`, `--line-width=0`, changelog_file])
+  await writeFile(changelog_file, lines.join(`\n`))
 }
 
 async function main(): Promise<void> {
-  const [provided_tag, changelog_file = `changelog.md`] = Deno.args
+  const [provided_tag, changelog_file = `changelog.md`] = process.argv.slice(2)
 
   let tag_name = provided_tag
   if (!tag_name) {
@@ -176,4 +198,11 @@ async function main(): Promise<void> {
   console.log(`✓ Release notes added to ${changelog_file}`)
 }
 
-if (import.meta.main) await main()
+if (import.meta.filename === resolve(process.argv[1])) {
+  try {
+    await main()
+  } catch (err: unknown) {
+    console.error(err instanceof Error ? err.message : err)
+    process.exit(1)
+  }
+}

@@ -1,33 +1,31 @@
 default_install_hook_types: [pre-commit, commit-msg]
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+  - repo: builtin
     hooks:
       - id: check-case-conflict
       - id: check-symlinks
       - id: check-yaml
-      - id: destroyed-symlinks
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.2
     hooks:
       - id: codespell
         stages: [pre-commit, commit-msg]
         args: [--check-filenames]
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.42.0
+    rev: v1.44.0
     hooks:
       - id: typos
         types: [text]
         args: []
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.47.0
+    rev: v0.48.0
     hooks:
       - id: markdownlint
         # MD013: line too long
@@ -36,7 +34,7 @@ repos:
         args: [--disable, MD013, MD033, MD041, '--']
 
   - repo: https://github.com/lycheeverse/lychee
-    rev: lychee-v0.22.0
+    rev: lychee-v0.23.0
     hooks:
       - id: lychee
         args:

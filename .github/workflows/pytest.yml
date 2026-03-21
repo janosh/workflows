@@ -11,6 +11,10 @@ on:
         description: Operating system
         type: string
         default: ubuntu-latest
+      node-version:
+        description: Node.js version (setup-node is skipped when empty)
+        type: string
+        default: ""
       pre-install-cmd:
         description: Run before install
         type: string
@@ -38,12 +42,18 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python-version }}
+
+      - name: Set up Node
+        if: inputs.node-version != ''
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node-version }}
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v6

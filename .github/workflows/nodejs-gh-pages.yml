@@ -80,6 +80,8 @@ jobs:
           path: ${{ inputs.working-directory }}/build
 
   deploy:
+    # PR runs build to verify, but only pushes/dispatches publish (Pages has one live site)
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

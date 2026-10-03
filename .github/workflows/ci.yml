@@ -19,7 +19,7 @@ jobs:
 
       # runs actionlint plus the other hooks in .pre-commit-config.yaml
       - name: Run prek hooks
-        uses: j178/prek-action@v3
+        uses: j178/prek-action@v3.0.0 # no moving major tags since v3
 
   script-tests:
     runs-on: ubuntu-latest

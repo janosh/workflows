@@ -6,7 +6,7 @@ on:
       python-version:
         description: Python version
         type: string
-        default: "3.10"
+        default: "3.12"
       os:
         description: Operating system
         type: string
@@ -16,23 +16,23 @@ on:
         type: string
         default: ""
       pre-install-cmd:
-        description: Run before install
+        description: Command to run before installing dependencies
         type: string
         default: ""
       install-cmd:
-        description: Install dependencies
+        description: Command to install dependencies
         type: string
-        default: uv pip install -e '.[test]'  --system
+        default: uv pip install -e '.[test]' --system
       test-cmd:
-        description: Run tests
+        description: Command to run tests (must write coverage.xml when upload-coverage is not 'no')
         type: string
-        default: pytest --durations 20 --cov .
-      pre-test:
-        description: Run before tests
+        default: pytest --durations 20 --cov . --cov-report=xml
+      pre-test-cmd:
+        description: Command to run before tests
         type: string
         default: ""
       upload-coverage:
-        description: One of 'yes', 'no' or 'strict' (fail on error)
+        description: Upload coverage.xml to Codecov. One of 'no', 'yes' or 'strict' (fail the job on upload errors)
         type: string
         default: "no"
 
@@ -41,22 +41,28 @@ jobs:
     runs-on: ${{ inputs.os }}
 
     steps:
+      - name: Validate inputs
+        if: ${{ !contains(fromJSON('["no", "yes", "strict"]'), inputs.upload-coverage) }}
+        run: |
+          echo "::error::upload-coverage must be 'no', 'yes' or 'strict', got '${{ inputs.upload-coverage }}'"
+          exit 1
+
       - name: Check out repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python-version }}
 
       - name: Set up Node
         if: inputs.node-version != ''
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ inputs.node-version }}
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.2.0
 
       - name: Install dependencies
         shell: bash
@@ -65,14 +71,13 @@ jobs:
           ${{ inputs.install-cmd }}
 
       - name: Run tests
-        id: tests
         run: |
-          ${{ inputs.pre-test }}
+          ${{ inputs.pre-test-cmd }}
           ${{ inputs.test-cmd }}
 
       - name: Upload coverage to Codecov
         if: inputs.upload-coverage != 'no'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

@@ -2,10 +2,11 @@
 
 ## Workflows
 
-- [`pypi-publish.yml`](.github/workflows/pypi-publish.yml) - Run all `pytest` functions for a PyPI package and release a new version to PyPI if all tests pass and the run was triggered by a release. Uses `secrets.PYPI_TOKEN` to authenticate with PyPI.
-- [`nodejs-gh-pages.yml`](.github/workflows/nodejs-gh-pages.yml) - Deploy server-rendered static site to GitHub Pages
-- [`npm-publish.yml`](.github/workflows/npm-publish.yml) - Run all tests for an NPM package (usually written in Playwright and vitest) and release a new version to NPM if all tests pass and the run was triggered by a release. Uses `secrets.NPM_TOKEN` to authenticate with NPM.
-- [`pytest.yml`](.github/workflows/pytest.yml) - Run all `pytest` functions for a PyPI package.
+- [`nodejs-gh-pages.yml`](.github/workflows/nodejs-gh-pages.yml) - Build a static site (`build-cmd`, output in `build-dir`) and deploy it to GitHub Pages. PRs and non-default branches only build; pushes, manual and scheduled runs on the default branch deploy.
+- [`npm-test.yml`](.github/workflows/npm-test.yml) - Run unit tests (`test-cmd`) and end-to-end tests (`e2e-test-cmd`, e.g. Playwright) for an NPM package. Either job is skipped when its command is empty.
+- [`npm-publish.yml`](.github/workflows/npm-publish.yml) - Run `npm-test.yml`, then publish to NPM when triggered by a release. Uses `secrets.NPM_TOKEN`.
+- [`pytest.yml`](.github/workflows/pytest.yml) - Run `pytest` for a Python package, optionally uploading `coverage.xml` to Codecov (`upload-coverage`, uses `secrets.CODECOV_TOKEN`).
+- [`pypi-publish.yml`](.github/workflows/pypi-publish.yml) - Build the package with `uv build` and publish it to PyPI. Uses `secrets.PYPI_TOKEN`; call it from a release-triggered workflow.
 
 ## Actions
 

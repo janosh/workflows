@@ -8,7 +8,7 @@ on:
         type: string
         default: "24"
       install-cmd:
-        description: Install dependencies
+        description: Command to install dependencies
         type: string
         default: npm install
       install-e2e:
@@ -44,10 +44,10 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ inputs.node-version }}
           cache-dependency-path: ${{ inputs.working-directory }}/package.json
@@ -56,7 +56,6 @@ jobs:
         run: ${{ inputs.install-cmd }}
 
       - name: Run unit tests
-        id: unit-tests
         run: ${{ inputs.test-cmd }}
 
   end-to-end:
@@ -68,10 +67,10 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ inputs.node-version }}
           cache-dependency-path: ${{ inputs.working-directory }}/package.json
@@ -82,5 +81,4 @@ jobs:
           ${{ inputs.install-e2e }}
 
       - name: Run end-to-end tests
-        id: e2e-tests
         run: ${{ inputs.e2e-test-cmd }}

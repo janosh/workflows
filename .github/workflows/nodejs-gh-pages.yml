@@ -80,8 +80,9 @@ jobs:
           path: ${{ inputs.working-directory }}/build
 
   deploy:
-    # PR runs build to verify, but only pushes/dispatches publish (Pages has one live site)
-    if: github.event_name != 'pull_request'
+    # PR runs (incl. pull_request_target, merge_group) only build to verify; Pages has one live
+    # site, so only default-branch events publish. Callers see their own event_name here.
+    if: contains(fromJSON('["push", "workflow_dispatch", "schedule"]'), github.event_name)
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

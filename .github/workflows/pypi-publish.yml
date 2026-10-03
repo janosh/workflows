@@ -3,34 +3,34 @@ name: Publish to PyPI
 on:
   workflow_call:
     inputs:
-      os:
-        description: Operating system
+      runs-on:
+        description: Runner label
         type: string
         default: ubuntu-latest
       python-version:
         description: Python version
         type: string
-        default: "3.11"
+        default: "3.12"
       uv-version:
         description: uv version
         type: string
         default: latest
 
-# Note: PyPI trusted publishing doesn't currently support reusable workflows.
-# You need to set PYPI_TOKEN as a repository secret for this workflow.
-# In your PyPI account, generate an API token and add it as a GitHub repository secret.
+# PyPI trusted publishing doesn't support reusable workflows yet (https://github.com/pypi/warehouse/issues/11096),
+# so callers pass a PyPI API token as the PYPI_TOKEN secret (`secrets: inherit` or explicitly).
+
+permissions:
+  contents: read
 
 jobs:
   release:
-    runs-on: ${{ inputs.os }}
-    permissions:
-      id-token: write
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Check out repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           version: ${{ inputs.uv-version }}
           python-version: ${{ inputs.python-version }}
@@ -38,6 +38,6 @@ jobs:
       - name: Build and publish package to PyPI
         run: |
           uv build
-          uv publish --username __token__ --token ${{ secrets.PYPI_TOKEN }}
+          uv publish
         env:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}

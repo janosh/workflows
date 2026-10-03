@@ -1,0 +1,38 @@
+# CI for this repo itself (not a reusable workflow): lint the workflows and test the scripts
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  prek:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v7
+
+      # runs actionlint plus the other hooks in .pre-commit-config.yaml
+      - name: Run prek hooks
+        uses: j178/prek-action@main # always the latest release (no moving major tags since v3)
+
+  script-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v7
+
+      - name: Set up node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Test scripts
+        run: |
+          npm install --no-save vitest
+          npx vitest run scripts/tests

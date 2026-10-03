@@ -2,14 +2,16 @@
 
 ## Workflows
 
-- [`pypi-publish.yml`](.github/workflows/pypi-publish.yml) - Run all `pytest` functions for a PyPI package and release a new version to PyPI if all tests pass and the run was triggered by a release. Uses `secrets.PYPI_TOKEN` to authenticate with PyPI.
-- [`nodejs-gh-pages.yml`](.github/workflows/nodejs-gh-pages.yml) - Deploy server-rendered static site to GitHub Pages
-- [`npm-publish.yml`](.github/workflows/npm-publish.yml) - Run all tests for an NPM package (usually written in Playwright and vitest) and release a new version to NPM if all tests pass and the run was triggered by a release. Uses `secrets.NPM_TOKEN` to authenticate with NPM.
-- [`pytest.yml`](.github/workflows/pytest.yml) - Run all `pytest` functions for a PyPI package.
+- [`nodejs-gh-pages.yml`](.github/workflows/nodejs-gh-pages.yml) - Build a static site (`build-cmd`, output in `build-dir`) and deploy it to GitHub Pages. PRs and non-default branches only build; pushes, manual and scheduled runs on the default branch deploy.
+- [`npm-test.yml`](.github/workflows/npm-test.yml) - Run unit tests (`test-cmd`) and end-to-end tests (`e2e-test-cmd`, with extra setup in `e2e-install-cmd`, e.g. Playwright browsers) for an NPM package. Either job is skipped when its command is empty.
+- [`pytest.yml`](.github/workflows/pytest.yml) - Run `pytest` for a Python package. `python-version` and `runs-on` take a single value or a JSON list to test a matrix (e.g. `runs-on: '["ubuntu-latest", "windows-latest"]'`). Optionally uploads `coverage.xml` to Codecov (`upload-coverage`, uses `secrets.CODECOV_TOKEN`).
+- [`pypi-publish.yml`](.github/workflows/pypi-publish.yml) - Build the package with `uv build` and publish it to PyPI. Uses `secrets.PYPI_TOKEN`; call it from a release-triggered workflow.
 
-## Actions
+Inputs that take shell commands end in `-cmd`; the runner input is `runs-on` everywhere.
 
-None yet.
+## Scripts
+
+- [`make-release-notes.ts`](scripts/make-release-notes.ts) - Prepend GitHub-style release notes for a tag to `changelog.md`: `npx tsx https://github.com/janosh/workflows/raw/refs/heads/main/scripts/make-release-notes.ts [tag] [changelog]`.
 
 ## Docs
 

@@ -11,10 +11,10 @@ on:
         description: Command to install dependencies
         type: string
         default: npm install
-      install-e2e:
+      e2e-install-cmd:
         description: |
-          Browser installation command for end-to-end tests. Usually `npx playwright install chromium`.
-          Defaults to empty string to avoid long install time if not needed.
+          Extra install command for end-to-end tests, e.g. `npx playwright install chromium`.
+          Empty by default to skip the browser download when not needed.
         type: string
         default: ""
       test-cmd:
@@ -30,9 +30,12 @@ on:
         type: string
         default: "."
       runs-on:
-        description: Runner
+        description: Runner label
         type: string
         default: ubuntu-latest
+
+permissions:
+  contents: read
 
 jobs:
   unit:
@@ -78,7 +81,7 @@ jobs:
       - name: Install dependencies
         run: |
           ${{ inputs.install-cmd }}
-          ${{ inputs.install-e2e }}
+          ${{ inputs.e2e-install-cmd }}
 
       - name: Run end-to-end tests
         run: ${{ inputs.e2e-test-cmd }}

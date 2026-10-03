@@ -3,8 +3,8 @@ name: Publish to PyPI
 on:
   workflow_call:
     inputs:
-      os:
-        description: Operating system
+      runs-on:
+        description: Runner label
         type: string
         default: ubuntu-latest
       python-version:
@@ -16,13 +16,15 @@ on:
         type: string
         default: latest
 
-# Note: PyPI trusted publishing doesn't currently support reusable workflows.
-# You need to set PYPI_TOKEN as a repository secret for this workflow.
-# In your PyPI account, generate an API token and add it as a GitHub repository secret.
+# PyPI trusted publishing doesn't support reusable workflows yet (https://github.com/pypi/warehouse/issues/11096),
+# so callers pass a PyPI API token as the PYPI_TOKEN secret (`secrets: inherit` or explicitly).
+
+permissions:
+  contents: read
 
 jobs:
   release:
-    runs-on: ${{ inputs.os }}
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Check out repo
         uses: actions/checkout@v7

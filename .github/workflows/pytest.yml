@@ -4,11 +4,11 @@ on:
   workflow_call:
     inputs:
       python-version:
-        description: Python version
+        description: Python version, or a JSON list of versions to test against, e.g. '["3.12", "3.13"]'
         type: string
         default: "3.12"
-      os:
-        description: Operating system
+      runs-on:
+        description: Runner label, or a JSON list of labels to test on, e.g. '["ubuntu-latest", "windows-latest"]'
         type: string
         default: ubuntu-latest
       node-version:
@@ -23,22 +23,31 @@ on:
         description: Command to install dependencies
         type: string
         default: uv pip install -e '.[test]' --system
-      test-cmd:
-        description: Command to run tests (must write coverage.xml when upload-coverage is not 'no')
-        type: string
-        default: pytest --durations 20 --cov . --cov-report=xml
       pre-test-cmd:
         description: Command to run before tests
         type: string
         default: ""
+      test-cmd:
+        description: Command to run tests (must write coverage.xml when upload-coverage is not 'no')
+        type: string
+        default: pytest --durations 20 --cov . --cov-report=xml
       upload-coverage:
         description: Upload coverage.xml to Codecov. One of 'no', 'yes' or 'strict' (fail the job on upload errors)
         type: string
         default: "no"
 
+permissions:
+  contents: read
+
 jobs:
   tests:
-    runs-on: ${{ inputs.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # a plain value becomes a one-element list, so callers can pass either form
+        python-version: ${{ fromJSON(startsWith(inputs.python-version, '[') && inputs.python-version || format('["{0}"]', inputs.python-version)) }}
+        runs-on: ${{ fromJSON(startsWith(inputs.runs-on, '[') && inputs.runs-on || format('["{0}"]', inputs.runs-on)) }}
+    runs-on: ${{ matrix.runs-on }}
 
     steps:
       - name: Validate inputs
@@ -53,7 +62,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: ${{ inputs.python-version }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Set up Node
         if: inputs.node-version != ''

@@ -41,6 +41,8 @@ permissions:
 
 jobs:
   tests:
+    # keep the plain `tests` name for single-value callers so required status checks don't change
+    name: ${{ (startsWith(inputs.python-version, '[') || startsWith(inputs.runs-on, '[')) && format('tests ({0}, {1})', matrix.python-version, matrix.runs-on) || 'tests' }}
     strategy:
       fail-fast: false
       matrix:
